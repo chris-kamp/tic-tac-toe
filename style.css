@@ -1,0 +1,18 @@
+#grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    width: 198px;
+    height: 198px;
+
+    box-sizing: border-box;
+}
+
+.boardSquare {
+    border: solid 1px;
+    text-align: center;
+    font-size: 50px;
+    box-sizing: border-box;
+
+
+}
