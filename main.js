@@ -50,6 +50,8 @@ const DisplayController = (() => {
 
     //The HTML representing the game board
     const board = [];
+    const resultText = document.getElementById("resultText");
+    const scoreText = document.getElementById("scoreText");
 
     //Initialise the empty game board
     const initialiseBoard = () => {
@@ -60,9 +62,7 @@ const DisplayController = (() => {
             square.classList.add("boardSquare");
             gridContainer.appendChild(square);
             square.addEventListener("click", () => {
-                Gameboard.fillSquare(index);
-                displayBoard();
-                GameController.advanceTurn();
+                GameController.playTurn(index);
             });
             board.push(square);
         }
@@ -74,14 +74,38 @@ const DisplayController = (() => {
             board[index].textContent = content;
         });
     };
-    return {initialiseBoard, displayBoard};
+
+    //Update the result text
+    const displayResult = (result) => {
+        switch(result){
+            case "win":
+                resultText.textContent = `${GameController.getCurrentPlayer().getName()} wins!`;
+                break;
+            case "tie":
+                resultText.textContent = "It's a tie!";
+                break;
+        }
+
+    };
+
+    //Update the score text
+    const displayScore = () => {
+        scoreText.textContent = `${GameController.getPlayer(0).getName()}: ${GameController.getPlayer(0).getScore()} | ${GameController.getPlayer(1).getName()}: ${GameController.getPlayer(1).getScore()}`;
+    }
+
+    return {initialiseBoard, displayBoard, displayResult, displayScore};
  })();
 
 //A factory function to create objects for each player
-function Player(mark, turnIndex) {
+function Player(name, mark, turnIndex) {
     //Get the player's mark (X or O)
     const getMark = () => {
         return mark;
+    };
+
+    //Get the player's name
+    const getName = () => {
+        return name;
     };
 
     //Get the player's turn order index
@@ -94,24 +118,27 @@ function Player(mark, turnIndex) {
     const getScore = () => {
         return score;
     }
-    return {getScore, getMark, getTurnIndex};
-}
 
-//TODO: Move this to initialisation code
-const player1 = Player("X");
-const player2 = Player("O");
+    const incrementScore = (increment) => {
+        score += increment;
+    }
+    return {getScore, getMark, getTurnIndex, getName, incrementScore};
+}
 
 const GameController = (() => {
     let currentPlayer;
+    let active;
     const players = [];
 
     //Initialise the board and players
     const initialiseGame = () => {
-        players.push(Player("X", 0));
-        players.push(Player("0", 1));
+        active = true;
+        players.push(Player("Player 1", "X", 0));
+        players.push(Player("Player 2", "0", 1));
         currentPlayer = players[0];
         DisplayController.initialiseBoard();
         DisplayController.displayBoard();
+        DisplayController.displayScore();
     };
 
     //Advance to the next player's turn
@@ -125,7 +152,31 @@ const GameController = (() => {
         return currentPlayer;
     };
 
-    return {getCurrentPlayer, initialiseGame, advanceTurn};
+    //Get a player by turn index
+    const getPlayer = (turnIndex) => {
+        return players[turnIndex];
+    };
+
+    //Play out a turn
+    const playTurn = (clickedIndex) => {
+        if(!active) {
+            return false;
+        }
+        Gameboard.fillSquare(clickedIndex);
+        DisplayController.displayBoard();
+        const result = Gameboard.checkResult();
+        if(result) {
+            active = false;
+            if(result === "win") {
+                currentPlayer.incrementScore(1);
+            }
+            DisplayController.displayResult(result);
+            DisplayController.displayScore();
+        } else {
+            advanceTurn();
+        }
+    };
+    return {getCurrentPlayer, initialiseGame, playTurn, getPlayer};
 })();
 
 GameController.initialiseGame();
