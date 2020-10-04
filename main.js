@@ -42,7 +42,15 @@ const Gameboard = (() => {
         return "tie";
     };
 
-    return {getBoardContent, fillSquare, checkResult};
+    //Clear the board content
+    const clearBoard = () => {
+        for(i = 0; i < boardContent.length; i++) {
+            boardContent[i] = "";
+        }
+        DisplayController.displayBoard();
+    };
+
+    return {getBoardContent, fillSquare, checkResult, clearBoard};
 })();
 
 //An object to control the display
@@ -50,8 +58,12 @@ const DisplayController = (() => {
 
     //The HTML representing the game board
     const board = [];
-    const resultText = document.getElementById("resultText");
+    const statusText = document.getElementById("statusText");
     const scoreText = document.getElementById("scoreText");
+    const startButton = document.getElementById("startButton");
+    const restartButton = document.getElementById("restartButton");
+    const resetButton = document.getElementById("resetButton");
+
 
     //Initialise the empty game board
     const initialiseBoard = () => {
@@ -66,6 +78,10 @@ const DisplayController = (() => {
             });
             board.push(square);
         }
+        startButton.addEventListener("click", GameController.startGame);
+        restartButton.addEventListener("click", GameController.restartGame);
+        resetButton.addEventListener("click", GameController.resetScores);
+        displayStatus("start");
     };
 
     //Update the game board to display the current game state
@@ -76,24 +92,28 @@ const DisplayController = (() => {
     };
 
     //Update the result text
-    const displayResult = (result) => {
-        switch(result){
+    const displayStatus = (key) => {
+        switch(key){
             case "win":
-                resultText.textContent = `${GameController.getCurrentPlayer().getName()} wins!`;
+                statusText.textContent = `${GameController.getCurrentPlayer().getName()} wins!`;
                 break;
             case "tie":
-                resultText.textContent = "It's a tie!";
+                statusText.textContent = "It's a tie!";
+                break;
+            case "start":
+                statusText.textContent = "Press START to begin";
+                break;
+            case "clear":
+                statusText.textContent = "";
                 break;
         }
-
     };
 
     //Update the score text
     const displayScore = () => {
         scoreText.textContent = `${GameController.getPlayer(0).getName()}: ${GameController.getPlayer(0).getScore()} | ${GameController.getPlayer(1).getName()}: ${GameController.getPlayer(1).getScore()}`;
     }
-
-    return {initialiseBoard, displayBoard, displayResult, displayScore};
+    return {initialiseBoard, displayBoard, displayStatus, displayScore};
  })();
 
 //A factory function to create objects for each player
@@ -117,12 +137,17 @@ function Player(name, mark, turnIndex) {
     let score = 0;
     const getScore = () => {
         return score;
-    }
+    };
 
     const incrementScore = (increment) => {
         score += increment;
-    }
-    return {getScore, getMark, getTurnIndex, getName, incrementScore};
+    };
+
+    const resetScore = () => {
+        score = 0;
+    };
+
+    return {getScore, getMark, getTurnIndex, getName, incrementScore, resetScore};
 }
 
 const GameController = (() => {
@@ -132,12 +157,36 @@ const GameController = (() => {
 
     //Initialise the board and players
     const initialiseGame = () => {
-        active = true;
+        active = false;
         players.push(Player("Player 1", "X", 0));
         players.push(Player("Player 2", "0", 1));
         currentPlayer = players[0];
         DisplayController.initialiseBoard();
         DisplayController.displayBoard();
+        DisplayController.displayScore();
+    };
+
+    //Restart the game
+    const restartGame = () => {
+        active = false;
+        DisplayController.displayStatus("start");
+        Gameboard.clearBoard();
+    };
+
+    //Start the game (from an inactive state)
+    const startGame = () => {
+        if(!active) {
+            restartGame();
+            active = true;
+            DisplayController.displayStatus("clear");
+        }
+    };
+
+    //Reset the scores of all players
+    const resetScores = () => {
+        players.forEach(player => {
+            player.resetScore();
+        });
         DisplayController.displayScore();
     };
 
@@ -170,13 +219,13 @@ const GameController = (() => {
             if(result === "win") {
                 currentPlayer.incrementScore(1);
             }
-            DisplayController.displayResult(result);
+            DisplayController.displayStatus(result);
             DisplayController.displayScore();
         } else {
             advanceTurn();
         }
     };
-    return {getCurrentPlayer, initialiseGame, playTurn, getPlayer};
+    return {getCurrentPlayer, initialiseGame, playTurn, getPlayer, startGame, restartGame, resetScores};
 })();
 
 GameController.initialiseGame();
