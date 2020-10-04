@@ -1,7 +1,7 @@
 //An object to control the state of the board
 const Gameboard = (() => {
     //An array holding the content of the game board
-    const boardContent = ["X","","","","","","","",""];
+    const boardContent = ["","","","","","","","",""];
     const getBoardContent = () => {
         return boardContent;
     }
@@ -33,6 +33,7 @@ const DisplayController = (() => {
             square.addEventListener("click", () => {
                 Gameboard.fillSquare(index);
                 displayBoard();
+                GameController.advanceTurn();
             });
             board.push(square);
         }
@@ -48,10 +49,15 @@ const DisplayController = (() => {
  })();
 
 //A factory function to create objects for each player
-function Player(mark) {
+function Player(mark, turnIndex) {
     //Get the player's mark (X or O)
     const getMark = () => {
         return mark;
+    };
+
+    //Get the player's turn order index
+    const getTurnIndex = () => {
+        return turnIndex;
     };
 
     //The player's current score
@@ -59,7 +65,7 @@ function Player(mark) {
     const getScore = () => {
         return score;
     }
-    return {getScore, getMark};
+    return {getScore, getMark, getTurnIndex};
 }
 
 //TODO: Move this to initialisation code
@@ -67,13 +73,29 @@ const player1 = Player("X");
 const player2 = Player("O");
 
 const GameController = (() => {
-    let currentPlayer = player1;
+    let currentPlayer;
+    const players = [];
+
+    //Initialise the board and players
+    const initialiseGame = () => {
+        players.push(Player("X", 0));
+        players.push(Player("0", 1));
+        currentPlayer = players[0];
+        DisplayController.initialiseBoard();
+        DisplayController.displayBoard();
+    };
+
+    //Advance to the next player's turn
+    const advanceTurn = () => {
+        const newIndex = (currentPlayer.getTurnIndex() + 1) % (players.length);
+        currentPlayer = players[newIndex];
+    };
+
     const getCurrentPlayer = () => {
         return currentPlayer;
     };
-    return {getCurrentPlayer};
+
+    return {getCurrentPlayer, initialiseGame, advanceTurn};
 })();
 
-
-DisplayController.initialiseBoard();
-DisplayController.displayBoard();
+GameController.initialiseGame();
