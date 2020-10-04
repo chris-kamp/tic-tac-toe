@@ -1,9 +1,12 @@
 const Gameboard = (() => {
     const board = ["X","O","X","O","X","O","X","O","X"];
-    return {board};
+    const getBoard = () => {
+        return board;
+    }
+    return {getBoard};
 })();
 
-const displayController = (() => {
+const DisplayController = (() => {
     const board = [];
     const initialiseBoard = () => {
         const gridContainer = document.getElementById("grid-container");
@@ -11,13 +14,14 @@ const displayController = (() => {
             const square = document.createElement("div");
             square.classList.add("boardSquare");
             gridContainer.appendChild(square);
-            square.textContent = Gameboard.board[i]; //Move to displayBoard
             board.push(square);
         }
     };
 
     const displayBoard = () => {
-
+        Gameboard.getBoard().forEach((content, square) => {
+            board[square].textContent = content;
+        });
     };
     return {displayBoard, initialiseBoard};
  })();
