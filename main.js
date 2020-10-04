@@ -13,7 +13,36 @@ const Gameboard = (() => {
         }
     };
 
-    return {getBoardContent, fillSquare};
+    //Check if the game is over and return the result
+    const checkResult = () => {
+    
+        //Iterate over all possible lines and check for wins
+        const lines = [
+            [0,1,2],
+            [3,4,5],
+            [6,7,8],
+            [0,3,6],
+            [1,4,7],
+            [2,5,8],
+            [0,4,8],
+            [2,4,6]
+        ];
+        for(i = 0; i < lines.length; i++) {
+            if(boardContent[lines[i][0]] !== "" && (boardContent[lines[i][0]] === boardContent[lines[i][1]] && boardContent[lines[i][0]] === boardContent[lines[i][2]])) {
+                return "win";
+            }
+        }
+
+        //If there are no winning lines, return false if any squares are empty, otherwise return "tie"
+        for(i = 0; i < boardContent.length; i++) {
+            if(boardContent[i] === "") {
+                return false;
+            }
+        }
+        return "tie";
+    };
+
+    return {getBoardContent, fillSquare, checkResult};
 })();
 
 //An object to control the display
@@ -91,6 +120,7 @@ const GameController = (() => {
         currentPlayer = players[newIndex];
     };
 
+    //Get the player whose turn it currently is
     const getCurrentPlayer = () => {
         return currentPlayer;
     };
