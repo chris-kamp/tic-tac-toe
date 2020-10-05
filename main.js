@@ -145,7 +145,7 @@ const DisplayController = (() => {
     //Update the name displayed for a player
     const displayName = (player) => {
         const index = player.getTurnIndex();
-        nameDisplays[index].textContent = player.getName();
+        nameDisplays[index].textContent = `${player.getName()} [${player.getMark()}]`;
         nameInputs[index].replaceWith(nameDisplays[index]);
     };
 
@@ -162,7 +162,7 @@ const DisplayController = (() => {
         scoreTextP1.textContent = `${GameController.getPlayer(0).getName()}: ${GameController.getPlayer(0).getScore()}`;
         scoreTextP2.textContent = `${GameController.getPlayer(1).getName()}: ${GameController.getPlayer(1).getScore()}`;
     }
-    return {initialiseBoard, displayBoard, displayStatus, displayScore, initialiseNameInputs};
+    return {initialiseBoard, displayBoard, displayStatus, displayScore, initialiseNameInputs, displayName};
  })();
 
 //A factory function to create objects for each player
@@ -219,6 +219,8 @@ const GameController = (() => {
         currentPlayer = players[0];
         DisplayController.initialiseBoard();
         DisplayController.initialiseNameInputs();
+        DisplayController.displayName(players[0]);
+        DisplayController.displayName(players[1]);
         DisplayController.displayBoard();
         DisplayController.displayScore();
     };

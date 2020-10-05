@@ -18,6 +18,10 @@
     padding: 0;
 }
 
+.check-container {
+    padding-top: 4px;
+}
+
 .nameInput {
     width: 168px;
 }
@@ -25,6 +29,11 @@
 #name-container {
     margin-bottom: 5px;
     font-size: 0.9em;
+}
+
+.name-row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
 }
 
 #grid-container {
