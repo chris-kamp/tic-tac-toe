@@ -1,15 +1,36 @@
+#content-container {
+    position: relative;
+    width: 100%;
+    height: 70vh;
+}
+
+#game-container {
+    width: 200px;
+    height: 300px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: -150px 0 0 -100px;
+}
+
 #grid-container {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     grid-template-rows: 1fr 1fr 1fr;
     width: 198px;
     height: 198px;
+    border: solid 1px;
 }
 
 .boardSquare {
     border: solid 1px;
     text-align: center;
     font-size: 50px;
+}
+
+.text {
+    padding: 0 0 0 20px;
+    font-weight: bold;
 }
 
 button {
