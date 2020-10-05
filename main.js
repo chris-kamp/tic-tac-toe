@@ -71,6 +71,8 @@ const DisplayController = (() => {
     nameDisplays.push(document.getElementById("nameP1"));
     nameDisplays.push(document.getElementById("nameP2"));
     const nameInputs = [];
+    const AIP1 = document.getElementById("AIP1");
+    const AIP2 = document.getElementById("AIP2");
 
     //Initialise the empty game board
     const initialiseBoard = () => {
@@ -161,8 +163,20 @@ const DisplayController = (() => {
     const displayScore = () => {
         scoreTextP1.textContent = `${GameController.getPlayer(0).getName()}: ${GameController.getPlayer(0).getScore()}`;
         scoreTextP2.textContent = `${GameController.getPlayer(1).getName()}: ${GameController.getPlayer(1).getScore()}`;
-    }
-    return {initialiseBoard, displayBoard, displayStatus, displayScore, initialiseNameInputs, displayName};
+    };
+
+    //Enable or disable AI checkboxes
+    const enableCheckboxes = () => {
+        AIP1.disabled = false;
+        AIP2.disabled = false;
+    };
+
+    const disableCheckboxes = () => {
+        AIP1.disabled = true;
+        AIP2.disabled = true;
+    };
+
+    return {initialiseBoard, displayBoard, displayStatus, displayScore, initialiseNameInputs, displayName, enableCheckboxes, disableCheckboxes};
  })();
 
 //A factory function to create objects for each player
@@ -223,6 +237,7 @@ const GameController = (() => {
         DisplayController.displayName(players[1]);
         DisplayController.displayBoard();
         DisplayController.displayScore();
+        DisplayController.enableCheckboxes();
     };
 
     //Restart the game
@@ -230,6 +245,7 @@ const GameController = (() => {
         active = false;
         DisplayController.displayStatus("start");
         Gameboard.clearBoard();
+        DisplayController.enableCheckboxes();
     };
 
     //Start the game (from an inactive state)
@@ -238,6 +254,7 @@ const GameController = (() => {
             restartGame();
             active = true;
             DisplayController.displayStatus("clear");
+            DisplayController.disableCheckboxes();
         }
     };
 
@@ -280,6 +297,7 @@ const GameController = (() => {
             }
             DisplayController.displayStatus(result);
             DisplayController.displayScore();
+            DisplayController.enableCheckboxes();
         } else {
             advanceTurn();
         }
