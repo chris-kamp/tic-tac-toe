@@ -59,11 +59,18 @@ const DisplayController = (() => {
     //The HTML representing the game board
     const board = [];
     const statusText = document.getElementById("statusText");
-    const scoreText = document.getElementById("scoreText");
+    const scoreTextP1 = document.getElementById("scoreTextP1");
+    const scoreTextP2 = document.getElementById("scoreTextP2");
     const startButton = document.getElementById("startButton");
     const restartButton = document.getElementById("restartButton");
     const resetButton = document.getElementById("resetButton");
-
+    const editNameButtons = [];
+    editNameButtons.push(document.getElementById("editNameP1")); 
+    editNameButtons.push(document.getElementById("editNameP2"));
+    const nameDisplays = [];
+    nameDisplays.push(document.getElementById("nameP1"));
+    nameDisplays.push(document.getElementById("nameP2"));
+    const nameInputs = [];
 
     //Initialise the empty game board
     const initialiseBoard = () => {
@@ -82,6 +89,32 @@ const DisplayController = (() => {
         restartButton.addEventListener("click", GameController.restartGame);
         resetButton.addEventListener("click", GameController.resetScores);
         displayStatus("start");
+    };
+
+    //Initialise name input elements
+    const initialiseNameInputs = () => {
+        for(let i = 0; i < 2; i++) {
+            const player = GameController.getPlayer(i);
+            nameDisplay = nameDisplays[i];
+            const input = document.createElement("input");
+            input.classList.add("nameInput");
+            input.value = player.getName();
+            input.setAttribute("maxLength", 10);
+            input.addEventListener("blur", () => {
+                const char = /\S/;
+                if(input.value !== "" && input.value.search(char) !== -1) {
+                    player.setName(input.value);
+                } else {
+                    input.value = player.getName();
+                }
+                displayName(player);
+                displayScore();
+            });
+            nameInputs.push(input);
+            editNameButtons[i].addEventListener("click", () => {
+                inputName(player);
+            });
+        }
     };
 
     //Update the game board to display the current game state
@@ -109,18 +142,37 @@ const DisplayController = (() => {
         }
     };
 
+    //Update the name displayed for a player
+    const displayName = (player) => {
+        const index = player.getTurnIndex();
+        nameDisplays[index].textContent = player.getName();
+        nameInputs[index].replaceWith(nameDisplays[index]);
+    };
+
+    //Replace the name display for a player with an input field to change the player's name
+    const inputName = (player) => {
+        const input = nameInputs[player.getTurnIndex()];
+        nameDisplay = nameDisplays[player.getTurnIndex()];
+        nameDisplay.replaceWith(input);
+        input.focus();
+    };
+
     //Update the score text
     const displayScore = () => {
-        scoreText.textContent = `${GameController.getPlayer(0).getName()}: ${GameController.getPlayer(0).getScore()} | ${GameController.getPlayer(1).getName()}: ${GameController.getPlayer(1).getScore()}`;
+        scoreTextP1.textContent = `${GameController.getPlayer(0).getName()}: ${GameController.getPlayer(0).getScore()}`;
+        scoreTextP2.textContent = `${GameController.getPlayer(1).getName()}: ${GameController.getPlayer(1).getScore()}`;
     }
-    return {initialiseBoard, displayBoard, displayStatus, displayScore};
+    return {initialiseBoard, displayBoard, displayStatus, displayScore, initialiseNameInputs};
  })();
 
 //A factory function to create objects for each player
-function Player(name, mark, turnIndex) {
+function Player(args) {
+
+    let name = args.name;
+
     //Get the player's mark (X or O)
     const getMark = () => {
-        return mark;
+        return args.mark;
     };
 
     //Get the player's name
@@ -128,9 +180,13 @@ function Player(name, mark, turnIndex) {
         return name;
     };
 
+    const setName = (newName) => {
+        name = newName;
+    };
+
     //Get the player's turn order index
     const getTurnIndex = () => {
-        return turnIndex;
+        return args.turnIndex;
     };
 
     //The player's current score
@@ -147,7 +203,7 @@ function Player(name, mark, turnIndex) {
         score = 0;
     };
 
-    return {getScore, getMark, getTurnIndex, getName, incrementScore, resetScore};
+    return {getScore, getMark, getTurnIndex, getName, incrementScore, resetScore, setName};
 }
 
 const GameController = (() => {
@@ -158,10 +214,11 @@ const GameController = (() => {
     //Initialise the board and players
     const initialiseGame = () => {
         active = false;
-        players.push(Player("Player 1", "X", 0));
-        players.push(Player("Player 2", "0", 1));
+        players.push(Player({name: "Player 1", mark: "X", turnIndex: 0}));
+        players.push(Player({name: "Player 2", mark: "0", turnIndex: 1}));
         currentPlayer = players[0];
         DisplayController.initialiseBoard();
+        DisplayController.initialiseNameInputs();
         DisplayController.displayBoard();
         DisplayController.displayScore();
     };
