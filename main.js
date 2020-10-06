@@ -71,8 +71,9 @@ const DisplayController = (() => {
     nameDisplays.push(document.getElementById("nameP1"));
     nameDisplays.push(document.getElementById("nameP2"));
     const nameInputs = [];
-    const AIP1 = document.getElementById("AIP1");
-    const AIP2 = document.getElementById("AIP2");
+    const AICheckboxes = [];
+    AICheckboxes.push(document.getElementById("AIP1"));
+    AICheckboxes.push(document.getElementById("AIP2"));
 
     //Initialise the empty game board
     const initialiseBoard = () => {
@@ -167,21 +168,25 @@ const DisplayController = (() => {
 
     //Enable or disable AI checkboxes
     const enableCheckboxes = () => {
-        AIP1.disabled = false;
-        AIP2.disabled = false;
+        AICheckboxes[0].disabled = false;
+        AICheckboxes[1].disabled = false;
     };
 
     const disableCheckboxes = () => {
-        AIP1.disabled = true;
-        AIP2.disabled = true;
+        AICheckboxes[0].disabled = true;
+        AICheckboxes[1].disabled = true;
     };
 
-    return {initialiseBoard, displayBoard, displayStatus, displayScore, initialiseNameInputs, displayName, enableCheckboxes, disableCheckboxes};
+    const getAICheckboxes = () => {
+        return AICheckboxes;
+    };
+
+    return {initialiseBoard, displayBoard, displayStatus, displayScore, initialiseNameInputs, displayName, enableCheckboxes, disableCheckboxes, getAICheckboxes};
  })();
 
 //A factory function to create objects for each player
 function Player(args) {
-
+    let AI = false;
     let name = args.name;
 
     //Get the player's mark (X or O)
@@ -217,8 +222,40 @@ function Player(args) {
         score = 0;
     };
 
-    return {getScore, getMark, getTurnIndex, getName, incrementScore, resetScore, setName};
+    const isAI = () => {
+        return AI;
+    };
+
+    const setAI = (bool) => {
+        AI = bool;
+    };
+
+    return {getScore, getMark, getTurnIndex, getName, incrementScore, resetScore, setName, setAI, isAI};
 }
+
+//An object to control AI players
+const AIController = (() => {
+    const chooseMove = () => {
+        const openSquares = [];
+        Gameboard.getBoardContent().forEach((square, index) => {
+            if(square === "") {
+                openSquares.push(index);
+            }
+        });
+        const playIndex = openSquares[Math.floor(Math.random() * (openSquares.length))];
+        return playIndex;
+    };
+
+    const makePlay = () => {
+        if(GameController.getCurrentPlayer().isAI()) {
+            GameController.playTurn(chooseMove());
+        } else {
+            return false;
+        }
+    };
+
+    return {makePlay};
+})();
 
 const GameController = (() => {
     let currentPlayer;
@@ -230,7 +267,6 @@ const GameController = (() => {
         active = false;
         players.push(Player({name: "Player 1", mark: "X", turnIndex: 0}));
         players.push(Player({name: "Player 2", mark: "0", turnIndex: 1}));
-        currentPlayer = players[0];
         DisplayController.initialiseBoard();
         DisplayController.initialiseNameInputs();
         DisplayController.displayName(players[0]);
@@ -246,6 +282,7 @@ const GameController = (() => {
         DisplayController.displayStatus("start");
         Gameboard.clearBoard();
         DisplayController.enableCheckboxes();
+        currentPlayer = players[0];
     };
 
     //Start the game (from an inactive state)
@@ -255,6 +292,11 @@ const GameController = (() => {
             active = true;
             DisplayController.displayStatus("clear");
             DisplayController.disableCheckboxes();
+            players.forEach(player => {
+                const index = player.getTurnIndex();
+                player.setAI(DisplayController.getAICheckboxes()[index].checked);
+            });
+            AIController.makePlay();
         }
     };
 
@@ -283,11 +325,11 @@ const GameController = (() => {
     };
 
     //Play out a turn
-    const playTurn = (clickedIndex) => {
+    const playTurn = (index) => {
         if(!active) {
             return false;
         }
-        Gameboard.fillSquare(clickedIndex);
+        Gameboard.fillSquare(index);
         DisplayController.displayBoard();
         const result = Gameboard.checkResult();
         if(result) {
@@ -300,6 +342,7 @@ const GameController = (() => {
             DisplayController.enableCheckboxes();
         } else {
             advanceTurn();
+            AIController.makePlay();
         }
     };
     return {getCurrentPlayer, initialiseGame, playTurn, getPlayer, startGame, restartGame, resetScores};
