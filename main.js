@@ -6,6 +6,16 @@ const Gameboard = (() => {
         return boardContent;
     }
 
+    const getOpenSquares = (board) => {
+        const openSquares = [];
+        board.forEach((square, index) => {
+            if(square === "") {
+                openSquares.push(index);
+            }
+        });
+        return openSquares;
+    };
+
     //Fill a square
     const fillSquare = (index) => {
         if(boardContent[index] === "") {
@@ -14,7 +24,7 @@ const Gameboard = (() => {
     };
 
     //Check if the game is over and return the result
-    const checkResult = () => {
+    const checkResult = (board) => {
     
         //Iterate over all possible lines and check for wins
         const lines = [
@@ -28,14 +38,40 @@ const Gameboard = (() => {
             [2,4,6]
         ];
         for(i = 0; i < lines.length; i++) {
-            if(boardContent[lines[i][0]] !== "" && (boardContent[lines[i][0]] === boardContent[lines[i][1]] && boardContent[lines[i][0]] === boardContent[lines[i][2]])) {
+            if(board[lines[i][0]] !== "" && (board[lines[i][0]] === board[lines[i][1]] && board[lines[i][0]] === board[lines[i][2]])) {
                 return "win";
             }
         }
 
         //If there are no winning lines, return false if any squares are empty, otherwise return "tie"
-        for(i = 0; i < boardContent.length; i++) {
-            if(boardContent[i] === "") {
+        for(i = 0; i < board.length; i++) {
+            if(board[i] === "") {
+                return false;
+            }
+        }
+        return "tie";
+    };
+
+    const getWinner = (board) => {
+        //Iterate over all possible lines and check for wins
+        const lines = [
+            [0,1,2],
+            [3,4,5],
+            [6,7,8],
+            [0,3,6],
+            [1,4,7],
+            [2,5,8],
+            [0,4,8],
+            [2,4,6]
+        ];
+        for(i = 0; i < lines.length; i++) {
+            if(board[lines[i][0]] !== "" && (board[lines[i][0]] === board[lines[i][1]] && board[lines[i][0]] === board[lines[i][2]])) {
+                return board[lines[i][0]];
+            }
+        }
+        //If there are no winning lines, return false if any squares are empty, otherwise return "tie"
+        for(i = 0; i < board.length; i++) {
+            if(board[i] === "") {
                 return false;
             }
         }
@@ -50,7 +86,7 @@ const Gameboard = (() => {
         DisplayController.displayBoard();
     };
 
-    return {getBoardContent, fillSquare, checkResult, clearBoard};
+    return {getBoardContent, getOpenSquares, fillSquare, checkResult, clearBoard, getWinner};
 })();
 
 //An object to control the display
@@ -233,28 +269,118 @@ function Player(args) {
     return {getScore, getMark, getTurnIndex, getName, incrementScore, resetScore, setName, setAI, isAI};
 }
 
+
 //An object to control AI players
 const AIController = (() => {
-    const chooseMove = () => {
-        const openSquares = [];
-        Gameboard.getBoardContent().forEach((square, index) => {
-            if(square === "") {
-                openSquares.push(index);
-            }
-        });
+ 
+    const getRandomMove = () => {
+        const openSquares = Gameboard.getOpenSquares(Gameboard.getBoardContent());
         const playIndex = openSquares[Math.floor(Math.random() * (openSquares.length))];
         return playIndex;
     };
 
-    const makePlay = () => {
-        if(GameController.getCurrentPlayer().isAI()) {
-            GameController.playTurn(chooseMove());
+
+    const getMax = (arr) => {
+        let topVal = arr[0];
+        arr.forEach(item => {
+            if(item > topVal) {
+                topVal = item;
+            }
+        });
+        return topVal;
+    };
+
+    const getMin = (arr => {
+        let minVal = arr[0];
+        arr.forEach(item => {
+            if(item < minVal) {
+                minVal = item;
+            }
+        });
+        return minVal;
+    });
+
+    const getValue = (result) => {
+        if(result === "X") {
+            return 1;
+        } else if(result === "O") {
+            return -1;
+        } else if (result === "tie") {
+            return 0;
         } else {
             return false;
         }
     };
 
-    return {makePlay};
+    const minimax = (markToPlay, board) => {
+        if(Gameboard.checkResult(board)) {
+            return getValue(Gameboard.getWinner(board));
+        }
+        const maximising = (markToPlay === "X") ? true : false;
+        const nextMark = (markToPlay === "X") ? "O" : "X";
+        const scores = [];
+        for(let i = 0; i < 9; i++) {
+            if(board[i] === "") {
+                const simBoard = [...board];
+                simBoard[i] = markToPlay;
+                scores.push(minimax(nextMark, simBoard));
+            }
+        }
+        if(maximising) {
+            return Math.max(...scores);
+        } else {
+            return Math.min(...scores);
+        }
+    };
+
+    const getBestMove = () => {
+        const markToPlay = GameController.getCurrentPlayer().getMark();
+        const maximising = (markToPlay === "X") ? true : false;
+        const nextMark = (markToPlay === "X") ? "O" : "X";
+        const board = Gameboard.getBoardContent();
+        let highestValueMove;
+        let lowestValueMove;
+        let highestScore = -99;
+        let lowestScore = 99;
+        for(let i = 0; i < 9; i++) {
+            if(board[i] === "") {
+                const simBoard = [...board];
+                simBoard[i] = markToPlay;
+                const score = minimax(nextMark, simBoard);
+                if(score > highestScore) {
+                    highestScore = score;
+                    highestValueMove = i;
+                }
+                if(score < lowestScore) {
+                    lowestScore = score;
+                    lowestValueMove = i;
+                }
+            }
+        }
+        if(maximising) {
+            return highestValueMove;
+        } else {
+            return lowestValueMove;
+        }
+    };
+
+    const makeRandomPlay = () => {
+        if(GameController.getCurrentPlayer().isAI()) {
+            GameController.playTurn(getRandomMove());
+        } else {
+            return false;
+        }
+    };
+
+    const makePlay = () => {
+        if(GameController.getCurrentPlayer().isAI()) {
+            GameController.playTurn(getBestMove());
+        } else {
+            return false;
+        }
+    };
+
+    return {makePlay, getBestMove, getValue, minimax};
 })();
 
 const GameController = (() => {
@@ -266,7 +392,7 @@ const GameController = (() => {
     const initialiseGame = () => {
         active = false;
         players.push(Player({name: "Player 1", mark: "X", turnIndex: 0}));
-        players.push(Player({name: "Player 2", mark: "0", turnIndex: 1}));
+        players.push(Player({name: "Player 2", mark: "O", turnIndex: 1}));
         DisplayController.initialiseBoard();
         DisplayController.initialiseNameInputs();
         DisplayController.displayName(players[0]);
@@ -310,8 +436,7 @@ const GameController = (() => {
 
     //Advance to the next player's turn
     const advanceTurn = () => {
-        const newIndex = (currentPlayer.getTurnIndex() + 1) % (players.length);
-        currentPlayer = players[newIndex];
+        currentPlayer = getOtherPlayer(currentPlayer);
     };
 
     //Get the player whose turn it currently is
@@ -324,6 +449,12 @@ const GameController = (() => {
         return players[turnIndex];
     };
 
+    //Given a player, get the other player
+    const getOtherPlayer = (player) => {
+        const newIndex = (player.getTurnIndex() + 1) % (players.length);
+        return players[newIndex];
+    };
+
     //Play out a turn
     const playTurn = (index) => {
         if(!active) {
@@ -331,7 +462,7 @@ const GameController = (() => {
         }
         Gameboard.fillSquare(index);
         DisplayController.displayBoard();
-        const result = Gameboard.checkResult();
+        const result = Gameboard.checkResult(Gameboard.getBoardContent());
         if(result) {
             active = false;
             if(result === "win") {
@@ -345,7 +476,7 @@ const GameController = (() => {
             AIController.makePlay();
         }
     };
-    return {getCurrentPlayer, initialiseGame, playTurn, getPlayer, startGame, restartGame, resetScores};
+    return {getCurrentPlayer, initialiseGame, playTurn, getPlayer, getOtherPlayer, startGame, restartGame, resetScores};
 })();
 
 GameController.initialiseGame();
