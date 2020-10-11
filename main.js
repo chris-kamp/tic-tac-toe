@@ -20,6 +20,9 @@ const Gameboard = (() => {
     const fillSquare = (index) => {
         if(boardContent[index] === "") {
             boardContent[index] = GameController.getCurrentPlayer().getMark();
+            return true;
+        } else {
+            return false;
         }
     };
 
@@ -460,7 +463,10 @@ const GameController = (() => {
         if(!active) {
             return false;
         }
-        Gameboard.fillSquare(index);
+        const empty = Gameboard.fillSquare(index);
+        if(!empty) {
+            return false;
+        }
         DisplayController.displayBoard();
         const result = Gameboard.checkResult(Gameboard.getBoardContent());
         if(result) {
